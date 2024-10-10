@@ -1,0 +1,75 @@
+public class Table {
+private int[][] data; // Двумерный массив для хранения целых чисел
+private int rows; // Число строк
+private int cols; // Число столбцов
+
+// Конструктор, который инициализирует таблицу нулями
+public Table(int rows, int cols) {
+this.rows = rows;
+this.cols = cols;
+data = new int[rows][cols]; // Создаём массив
+}
+
+// Метод для получения значения из ячейки (row, col)
+public int getValue(int row, int col) {
+return data[row][col]; // Возвращаем значение из таблицы
+}
+
+// Метод для установки значения в ячейку (row, col)
+public void setValue(int row, int col, int value) {
+data[row][col] = value; // Задаём значение в таблице
+}
+
+// Метод для получения числа строк в таблице
+public int getRowCount() {
+return rows; // Возвращаем количество строк
+}
+
+// Метод для получения числа столбцов в таблице
+public int getColumnCount() {
+return cols; // Возвращаем количество столбцов
+}
+
+// Метод для вывода всей таблицы на экран
+public void print() {
+for (int i = 0; i < rows; i++) {
+for (int j = 0; j < cols; j++) {
+System.out.print(data[i][j] + " "); // Печатаем значение и пробел
+}
+System.out.println(); // Печатаем новую строку
+}
+}
+
+// Метод для вычисления среднего значения всех элементов таблицы
+public double calculateAverage() {
+int sum = 0;
+int count = rows * cols;
+
+for (int i = 0; i < rows; i++) {
+for (int j = 0; j < cols; j++) {
+sum += data[i][j]; // Суммируем все значения
+}
+}
+
+return (double) sum / count; // Возвращаем среднее значение
+}
+}
+23:48
+public class Main {
+public static void main(String[] args) {
+Table table = new Table(3, 3); // Создаем таблицу 3x3
+
+// Устанавливаем значения в таблицу
+for (int i = 0; i < table.getRowCount(); i++) {
+for (int j = 0; j < table.getColumnCount(); j++) {
+table.setValue(i, j, i * j); // Пример значений
+}
+}
+
+// Печатаем таблицу
+table.print();
+
+// Вычисляем и выводим среднее значение
+System.out.println("Среднее значение: " + table.calculateAverage());
+}
+}
