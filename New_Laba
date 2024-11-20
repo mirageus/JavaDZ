@@ -1,0 +1,157 @@
+import java.sql.*;
+import java.util.HashSet;
+import java.util.Set;
+
+public class MusicAndBooksDB {
+
+    private static final String URL = "jdbc:postgresql://localhost:5432/yourdb";
+    private static final String USER = "youruser";
+    private static final String PASSWORD = "yourpassword";
+
+    public static void main(String[] args) {
+        try (Connection conn = DriverManager.getConnection(URL, USER, PASSWORD)) {
+            // Создаем таблицу music
+            createMusicTable(conn);
+
+            // Вставляем музыкальные композиции
+            insertMusicData(conn);
+            
+            // Получаем композиции без 'm' и 't'
+            getFilteredCompositions(conn);
+
+            // Добавляем свою любимую композицию
+            addFavoriteComposition(conn, "My Favorite Song", "My Favorite Artist");
+
+            // Создаем таблицы для книг и посетителей и заполняем их на основе JSON
+            createBooksAndVisitorsTables(conn);
+
+            // Получаем отсортированный список книг по году издания
+            getSortedBooksByYear(conn);
+
+            // Выводим книги младше 2000 года
+            getBooksYoungerThan2000(conn);
+
+   
+            addPersonalInfoAndFavorites(conn, "YourName", "FavoriteBook1");
+
+            // Удаляем созданные таблицы
+            dropTables(conn);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void createMusicTable(Connection conn) throws SQLException {
+        String sql = "CREATE TABLE IF NOT EXISTS music ("
+                + "id SERIAL PRIMARY KEY, "
+                + "title VARCHAR(255) NOT NULL, "
+                + "artist VARCHAR(255))";
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        }
+    }
+
+    private static void insertMusicData(Connection conn) throws SQLException {
+        String sql = "INSERT INTO music (title, artist) VALUES (?, ?)";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, "Bohemian Rhapsody");
+            pstmt.setString(2, "Queen");
+            pstmt.executeUpdate();
+
+            pstmt.setString(1, "Imagine");
+            pstmt.setString(2, "John Lennon");
+            pstmt.executeUpdate();
+
+            pstmt.setString(1, "Stairway to Heaven");
+            pstmt.setString(2, "Led Zeppelin");
+            pstmt.executeUpdate();
+        }
+    }
+
+    private static void getFilteredCompositions(Connection conn) throws SQLException {
+        String sql = "SELECT * FROM music WHERE lower(title) NOT LIKE '%m%' AND lower(title) NOT LIKE '%t%'";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.println("Filtered Music: " + rs.getString("title") + " by " + rs.getString("artist"));
+            }
+        }
+    }
+
+    private static void addFavoriteComposition(Connection conn, String title, String artist) throws SQLException {
+        String sql = "INSERT INTO music (title, artist) VALUES (?, ?)";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, title);
+            pstmt.setString(2, artist);
+            pstmt.executeUpdate();
+            System.out.println("Added favorite composition: " + title);
+        }
+    }
+
+    private static void createBooksAndVisitorsTables(Connection conn) throws SQLException {
+        String sqlBooks = "CREATE TABLE IF NOT EXISTS books ("
+                + "id SERIAL PRIMARY KEY, "
+                + "title VARCHAR(255) NOT NULL, "
+                + "author VARCHAR(255), "
+                + "year INT)";
+        String sqlVisitors = "CREATE TABLE IF NOT EXISTS visitors ("
+                + "id SERIAL PRIMARY KEY, "
+                + "name VARCHAR(255))";
+        try (Statement stmt = conn.createStatement()) {
+stmt.execute(sqlBooks);
+            stmt.execute(sqlVisitors);
+        }
+
+        // Предположим, у вас есть метод parseBooksFromJson для парсинга JSON
+        // insertUniqueBooksAndVisitors(conn);
+
+        // Это место, где вы могли бы вставить анализирование JSON и добавление данных.
+    }
+
+    private static void getSortedBooksByYear(Connection conn) throws SQLException {
+        String sql = "SELECT * FROM books ORDER BY year";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.println("Book: " + rs.getString("title") + " (Year: " + rs.getInt("year") + ")");
+            }
+        }
+    }
+
+    private static void getBooksYoungerThan2000(Connection conn) throws SQLException {
+        String sql = "SELECT * FROM books WHERE year < 2000";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                System.out.println("Book (young): " + rs.getString("title") + " (Year: " + rs.getInt("year") + ")");
+            }
+        }
+    }
+
+    private static void addPersonalInfoAndFavorites(Connection conn, String name, String favoriteBook) throws SQLException {
+        String sqlVisitor = "INSERT INTO visitors (name) VALUES (?) ON CONFLICT DO NOTHING";
+        String sqlBook = "INSERT INTO books (title, author, year) VALUES ('" + favoriteBook + "', 'Your Favorite Author', 2022) ON CONFLICT DO NOTHING";
+        try (PreparedStatement pstmtVisitor = conn.prepareStatement(sqlVisitor);
+             PreparedStatement pstmtBook = conn.prepareStatement(sqlBook)) {
+
+            pstmtVisitor.setString(1, name);
+            pstmtVisitor.executeUpdate();
+            pstmtBook.executeUpdate();
+
+            System.out.println("Added personal info and favorites to DB.");
+        }
+    }
+
+    private static void dropTables(Connection conn) throws SQLException {
+        String sqlDropMusic = "DROP TABLE IF EXISTS music CASCADE";
+        String sqlDropBooks = "DROP TABLE IF EXISTS books CASCADE";
+        String sqlDropVisitors = "DROP TABLE IF EXISTS visitors CASCADE";
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sqlDropMusic);
+            stmt.execute(sqlDropBooks);
+            stmt.execute(sqlDropVisitors);
+            System.out.println("Dropped all tables.");
+        }
+    }
+}
